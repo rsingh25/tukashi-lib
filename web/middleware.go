@@ -19,12 +19,15 @@ type OidcClaims struct {
 	Exp         int    `json:"exp,omitempty"`
 	Username    string `json:"username,omitempty"`
 	Email       string `json:"email,omitempty"`
-	Role        string `json:"custom:attmgt,omitempty"`
+	AttmgtRole  string `json:"custom:attmgt,omitempty"`
+	Name        string `json:"name,omitempty"`
 }
 
 type TraceID struct{}
 type UserEmail struct{}
-type UserRole struct{}
+type UserName struct{}
+type UserPhone struct{}
+type AttmgtRole struct{}
 type Middleware func(http.Handler) http.Handler
 
 // NewMwChain(m1, m2, m3)(myHandler) will chained as m1(m2(m3(myHandler)))
@@ -159,7 +162,9 @@ func WithAlbAuth(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), TraceID{}, r.Header.Get("X-Amzn-Trace-Id"))
 		ctx = context.WithValue(ctx, UserEmail{}, oidcClaim.Email)
-		ctx = context.WithValue(ctx, UserRole{}, oidcClaim.Role)
+		ctx = context.WithValue(ctx, UserName{}, oidcClaim.Name)
+		ctx = context.WithValue(ctx, UserPhone{}, oidcClaim.PhoneNumber)
+		ctx = context.WithValue(ctx, AttmgtRole{}, oidcClaim.AttmgtRole)
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
