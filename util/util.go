@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -149,4 +150,12 @@ func MustGetenvStr(key string) string {
 	}
 
 	return value
+}
+
+func MustToJsonByte(obj any) []byte {
+	jsonData, err := json.Marshal(obj)
+	if err != nil {
+		panic("ToJsonByte: cannot marshal")
+	}
+	return jsonData
 }

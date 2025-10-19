@@ -216,7 +216,7 @@ func WithPanicRecover(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				buf := make([]byte, 10<<10)
 				n := runtime.Stack(buf, false)
-				appLog.Error("Panic recovered", "err", err, "strack-trace", buf[:n])
+				appLog.Error("Panic recovered", "method", r.Method, "url", r.URL, "err", err, "strack-trace", string(buf[:n]))
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()
