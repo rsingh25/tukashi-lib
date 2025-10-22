@@ -31,6 +31,10 @@ func writeInternalServerError(w http.ResponseWriter, r *http.Request, message st
 	})
 }
 
+func Write400Response(w http.ResponseWriter, r *http.Request, status int, problems map[string]string, headers ...http.Header) {
+	WriteJsonResponse(w, r, status, problems, headers...)
+}
+
 // encoding error is not retured but handled in the function itself.
 func WriteJsonResponse[T any](w http.ResponseWriter, r *http.Request, status int, v T, headers ...http.Header) {
 	if len(headers) > 0 {
