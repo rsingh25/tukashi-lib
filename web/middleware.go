@@ -144,7 +144,14 @@ func WithApiKey(apiKey string) func(http.Handler) http.Handler {
 func WithAlbAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		oidcEncoded := strings.Split(r.Header.Get("X-Amzn-Oidc-Data"), ".")[1]
+		oidcStr := r.Header.Get("X-Amzn-Oidc-Data")
+		if oidcStr == "" {
+			appLog.Error("Missing Authentication header")
+			http.Error(w, "invalid token", http.StatusForbidden)
+			return
+		}
+
+		oidcEncoded := strings.Split(oidcStr, ".")[1]
 
 		oidcDecoded, err := base64.StdEncoding.DecodeString(oidcEncoded)
 		if err != nil {
