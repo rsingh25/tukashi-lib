@@ -38,8 +38,14 @@ func WriteJsonResponse[T any](w http.ResponseWriter, r *http.Request, status int
 		maps.Copy(w.Header(), headers[0])
 	}
 
+	traceId := r.Context().Value(TraceID{})
+	traceIdStr := ""
+	if traceId != nil {
+		traceIdStr = traceId.(string)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("App-Trace-ID", r.Context().Value(TraceID{}).(string))
+	w.Header().Set("X-Amzn-Trace-Id", traceIdStr)
 
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
