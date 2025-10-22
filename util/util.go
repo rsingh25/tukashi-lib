@@ -68,7 +68,7 @@ func Map[T, V any](ts []T, fn func(T) V) []V {
 func Must[T any](t T, err error) T {
 	if err != nil {
 		appLog.Error("Failed with error (panicing)", "error", err.Error(), "stack", debug.Stack())
-		panic(err) //No recovery
+		panic(err)
 	}
 	return t
 }

@@ -217,7 +217,16 @@ func WithPanicRecover(next http.Handler) http.Handler {
 				buf := make([]byte, 10<<10)
 				n := runtime.Stack(buf, false)
 				appLog.Error("Panic recovered", "method", r.Method, "url", r.URL, "err", err, "strack-trace", string(buf[:n]))
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+
+				message := "Internal Server Error"
+
+				switch v := err.(type) {
+				case string:
+					message = v
+				case error:
+					message = v.Error() //TODO leaking the error message
+				}
+				writeInternalServerError(w, r, message)
 			}
 		}()
 		next.ServeHTTP(w, r)

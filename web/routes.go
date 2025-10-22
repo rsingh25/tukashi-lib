@@ -8,7 +8,6 @@ import (
 	"maps"
 	"net/http"
 	"runtime/debug"
-	"strings"
 
 	"github.com/rsingh25/tukashi-lib/database"
 )
@@ -25,17 +24,10 @@ type Resp[T any] struct {
 	Status int
 }
 
-// Encoding error is not retured but handled in the function itself.
-// do no leak the interval error outside
-func WriteInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
-	//Log the error that caused this
-	appLog.Error(err.Error(), "err", err.Error(), "method", r.Method, "url", r.URL, "stack", strings.ReplaceAll(string(debug.Stack()), "\\n", "\n"))
-
-	//Attempt to write response
-	WriteJsonResponse(w, r, http.StatusInternalServerError, Resp[string]{
-		Val:    http.StatusText(http.StatusInternalServerError),
-		Err:    err,
-		Status: http.StatusInternalServerError,
+func writeInternalServerError(w http.ResponseWriter, r *http.Request, message string) {
+	WriteJsonResponse(w, r, http.StatusInternalServerError, map[string]string{
+		"message": message,
+		"traceID": "",
 	})
 }
 
@@ -63,8 +55,7 @@ func Exec[RespType any](f func(*http.Request, *database.Queries) Resp[RespType],
 		if withTx {
 			tx, qtx, err = db.BeginTx(r.Context(), nil)
 			if err != nil {
-				WriteInternalServerError(w, r, err)
-				return
+				panic(err)
 			}
 			defer tx.Rollback()
 		} else {
@@ -75,8 +66,7 @@ func Exec[RespType any](f func(*http.Request, *database.Queries) Resp[RespType],
 
 		if resp.Err != nil {
 			//TODO Handle error types
-			WriteInternalServerError(w, r, resp.Err)
-			return
+			panic(resp.Err)
 		} else {
 			if withTx {
 				tx.Commit()
@@ -98,8 +88,7 @@ func ValidateReqExec[RespType any, ReqType Validator](f func(ReqType, *http.Requ
 			WriteJsonResponse(w, r, http.StatusUnprocessableEntity, problems)
 			return
 		} else if err != nil {
-			WriteInternalServerError(w, r, err)
-			return
+			panic(err)
 		}
 
 		var qtx *database.Queries
@@ -108,8 +97,7 @@ func ValidateReqExec[RespType any, ReqType Validator](f func(ReqType, *http.Requ
 		if withTx {
 			tx, qtx, err = db.BeginTx(r.Context(), nil)
 			if err != nil {
-				WriteInternalServerError(w, r, err)
-				return
+				panic(err)
 			}
 			defer tx.Rollback()
 		} else {
@@ -120,8 +108,7 @@ func ValidateReqExec[RespType any, ReqType Validator](f func(ReqType, *http.Requ
 
 		if resp.Err != nil {
 			//TODO Handle error types
-			WriteInternalServerError(w, r, resp.Err)
-			return
+			panic(resp.Err)
 		} else {
 			if withTx {
 				tx.Commit()
